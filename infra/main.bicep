@@ -46,6 +46,19 @@ resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   }
 }
 
+resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2023-05-01' = {
+  parent: storage
+  name: 'default'
+}
+
+resource packageContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobService
+  name: 'app-package'
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
 resource workspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: workspaceName
   location: location
@@ -198,6 +211,9 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
   name: functionName
   location: location
   kind: 'functionapp,linux'
+  dependsOn: [
+    packageContainer
+  ]
   identity: {
     type: 'SystemAssigned'
   }
@@ -228,8 +244,6 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
       appSettings: [
         { name: 'AzureWebJobsStorage', value: 'DefaultEndpointsProtocol=https;AccountName=${storage.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storage.listKeys().keys[0].value}' }
         { name: 'FUNCTIONS_EXTENSION_VERSION', value: '~4' }
-        { name: 'FUNCTIONS_WORKER_RUNTIME', value: 'python' }
-        { name: 'SCM_DO_BUILD_DURING_DEPLOYMENT', value: 'true' }
         { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsights.properties.ConnectionString }
         { name: 'COSMOS_DATABASE_NAME', value: databaseName }
         { name: 'CosmosDBConnection', value: cosmos.listConnectionStrings().connectionStrings[0].connectionString }

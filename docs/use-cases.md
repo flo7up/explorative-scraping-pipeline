@@ -88,6 +88,51 @@ Useful fields:
 - partner ecosystem
 - source URL
 
+## Pattern 6: Real Estate Project Discovery
+
+Track public real estate projects across developer portfolios, planning portals, construction news, investment announcements, and municipality pages.
+
+Useful fields:
+
+- project name
+- developer or owner
+- asset class, such as residential, office, logistics, retail, hospitality, mixed-use, or infrastructure
+- location, city, region, and country
+- project status, such as proposed, approved, under construction, completed, or delayed
+- expected completion date
+- unit count, floor area, site area, or investment volume
+- architect, contractor, operator, or key partners
+- sustainability certifications or energy features
+- planning reference, permit ID, or source authority
+- source evidence
+
+Useful seed sources:
+
+- developer project pages
+- city planning and building permit portals
+- real estate investment trust updates
+- construction and property news sites
+- infrastructure authority project pages
+- public consultation pages
+
+Recommended quality gates:
+
+- require a location and project name before storing
+- require source evidence for status, size, or completion dates
+- use duplicate checks for project names plus normalized location, because the same development often appears in several news sources
+- keep review-before-store enabled when monitoring planning portals or news feeds with ambiguous project names
+
+## Other Good Fits
+
+The same pattern also works for:
+
+- grants, tenders, and funding opportunities
+- clinical trial or research program discovery from public registries
+- supplier and partner ecosystem mapping
+- policy, regulation, or compliance update monitoring
+- conference session, speaker, and agenda extraction
+- nonprofit program and impact story discovery
+
 ## Recommended Workflow For A New Domain
 
 1. Copy `examples/aiusecasehub.pipeline.config.json` or another example.

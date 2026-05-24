@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.43.8.12551",
-      "templateHash": "6248085244523368803"
+      "templateHash": "6173087461834583646"
     }
   },
   "parameters": {
@@ -111,6 +111,25 @@
         "allowBlobPublicAccess": false,
         "minimumTlsVersion": "TLS1_2"
       }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}', variables('storageName'), 'default')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}/{2}', variables('storageName'), 'default', 'app-package')]",
+      "properties": {
+        "publicAccess": "None"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageName'), 'default')]"
+      ]
     },
     {
       "type": "Microsoft.OperationalInsights/workspaces",
@@ -320,14 +339,6 @@
               "value": "~4"
             },
             {
-              "name": "FUNCTIONS_WORKER_RUNTIME",
-              "value": "python"
-            },
-            {
-              "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
-              "value": "true"
-            },
-            {
               "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
               "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName')), '2020-02-02').ConnectionString]"
             },
@@ -374,6 +385,7 @@
         "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]",
         "[resourceId('Microsoft.Insights/components', variables('appInsightsName'))]",
         "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('storageName'), 'default', 'app-package')]",
         "[resourceId('Microsoft.Web/serverfarms', variables('planName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]"
       ]
