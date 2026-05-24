@@ -6,6 +6,7 @@ from typing import Any
 from .config import PipelineConfig
 from .llm import chat_json
 from .models import ExtractedRecord
+from .prompt_templates import render_prompt_file
 
 logger = logging.getLogger(__name__)
 
@@ -90,20 +91,13 @@ def llm_groundedness(record: ExtractedRecord | dict[str, Any], source_text: str,
     if not deployment:
         return None
 
-    system_prompt = (
-        "You evaluate whether a structured record is grounded in the provided source text. "
-        "Return only JSON with score, result, reason, threshold, and passed. "
-        "score must be from 1 to 5, result must be pass or fail, and threshold is the provided threshold."
-    )
-    user_prompt = f"""
-Threshold: {config.groundedness.threshold}
-
-Source text:
-{source_text[: config.groundedness.maxInputChars]}
-
-Record claims:
-{build_claim_text(record)}
-""".strip()
+    prompt_values = {
+        "groundednessThreshold": config.groundedness.threshold,
+        "sourceText": source_text[: config.groundedness.maxInputChars],
+        "recordClaims": build_claim_text(record),
+    }
+    system_prompt = render_prompt_file(config.prompts.groundednessSystem, prompt_values)
+    user_prompt = render_prompt_file(config.prompts.groundednessUser, prompt_values)
 
     try:
         result = chat_json(system_prompt, user_prompt, deployment=deployment, temperature=0)

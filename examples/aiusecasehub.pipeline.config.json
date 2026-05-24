@@ -38,6 +38,12 @@
     "maxInputChars": 18000,
     "temperature": 0.1
   },
+  "prompts": {
+    "extractionSystem": "prompts/extraction.system.md",
+    "extractionUser": "prompts/extraction.user.md",
+    "groundednessSystem": "prompts/groundedness.system.md",
+    "groundednessUser": "prompts/groundedness.user.md"
+  },
   "quality": {
     "requireSourceEvidence": true,
     "reviewBeforeStore": true,

@@ -25,7 +25,7 @@ def _clean_text(html: str) -> tuple[str, str, list[str]]:
 
 
 def fetch_page(url: str, timeout: int = 20) -> FetchedPage:
-    response = requests.get(url, timeout=timeout, headers={"User-Agent": "explorative-scraping-pipeline/0.1"})
+    response = requests.get(url, timeout=timeout, headers={"User-Agent": "ai-web-scraping-pipeline/0.1"})
     response.raise_for_status()
     title, text, raw_links = _clean_text(response.text)
     final_url = response.url

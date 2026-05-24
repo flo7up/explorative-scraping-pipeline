@@ -1,6 +1,6 @@
-name: explorative-scraping-pipeline
+name: ai-web-scraping-pipeline
 metadata:
-  template: explorative-scraping-pipeline@0.1.0
+  template: ai-web-scraping-pipeline@0.1.0
 services:
   functions:
     project: .

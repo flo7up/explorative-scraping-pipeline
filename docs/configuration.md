@@ -20,6 +20,15 @@ Schema fields describe the target record. Required fields are enforced by the re
 - `maxInputChars`: source text truncation to control cost.
 - `temperature`: keep low for structured extraction.
 
+## Prompt Templates
+
+- `prompts.extractionSystem`: system prompt file for structured extraction.
+- `prompts.extractionUser`: user prompt file for structured extraction.
+- `prompts.groundednessSystem`: system prompt file for groundedness review.
+- `prompts.groundednessUser`: user prompt file for groundedness review.
+
+Prompt templates live in `prompts/` by default and use `{{placeholder}}` values. See `docs/prompt-customization.md`.
+
 ## Embeddings
 
 - `embedding.enabled`: enables provider-neutral embedding generation.

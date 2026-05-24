@@ -18,9 +18,12 @@ flowchart LR
 
 ## Main Runtime Components
 
-- `HttpScreenSources`: discovers candidate URLs from seed pages.
-- `CosmosCandidateTrigger`: fetches candidate URLs and extracts structured records.
-- `CosmosReviewTrigger`: validates extracted records, checks duplicate signals, evaluates groundedness, and stores approved output.
+- `DiscoveryAgent` (`src/pipeline/agents/discovery_agent.py`): discovers candidate URLs from seed pages.
+- `ExtractionAgent` (`src/pipeline/agents/extraction_agent.py`): fetches candidate URLs and extracts structured records.
+- `ReviewAgent` (`src/pipeline/agents/review_agent.py`): validates extracted records, checks duplicate signals, evaluates groundedness, and stores approved output.
+- `HttpScreenSources`: HTTP adapter for the discovery agent.
+- `CosmosCandidateTrigger`: Cosmos DB trigger adapter for the extraction agent.
+- `CosmosReviewTrigger`: Cosmos DB trigger adapter for the review agent.
 - `HttpExtractUrl`: manual one-off extraction endpoint.
 - `HttpSearchRecords`: simple read endpoint for approved records.
 - `TimerSourceRefresh`: revisits due source pages.

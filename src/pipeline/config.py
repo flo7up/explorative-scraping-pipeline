@@ -48,6 +48,13 @@ class GroundednessConfig(BaseModel):
     requirePass: bool = False
 
 
+class PromptConfig(BaseModel):
+    extractionSystem: str = "prompts/extraction.system.md"
+    extractionUser: str = "prompts/extraction.user.md"
+    groundednessSystem: str = "prompts/groundedness.system.md"
+    groundednessUser: str = "prompts/groundedness.user.md"
+
+
 class QualityConfig(BaseModel):
     requireSourceEvidence: bool = True
     reviewBeforeStore: bool = True
@@ -60,7 +67,7 @@ class QualityConfig(BaseModel):
 class PipelineConfig(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    projectName: str = "explorative-scraping-pipeline"
+    projectName: str = "ai-web-scraping-pipeline"
     recordType: str = "record"
     domainDescription: str = "Public web records."
     sourceDiscovery: SourceDiscoveryConfig = Field(default_factory=SourceDiscoveryConfig)
@@ -68,6 +75,7 @@ class PipelineConfig(BaseModel):
     llm: LlmConfig = Field(default_factory=LlmConfig)
     embedding: EmbeddingConfig = Field(default_factory=EmbeddingConfig)
     groundedness: GroundednessConfig = Field(default_factory=GroundednessConfig)
+    prompts: PromptConfig = Field(default_factory=PromptConfig)
     quality: QualityConfig = Field(default_factory=QualityConfig)
 
 

@@ -5,8 +5,9 @@ from src.pipeline.config import PipelineConfig
 
 def test_default_config_has_safe_values():
     config = PipelineConfig()
-    assert config.projectName == "explorative-scraping-pipeline"
+    assert config.projectName == "ai-web-scraping-pipeline"
     assert config.sourceDiscovery.revisitFrequencyDays >= 1
+    assert config.prompts.extractionSystem == "prompts/extraction.system.md"
     assert config.quality.reviewBeforeStore is True
 
 

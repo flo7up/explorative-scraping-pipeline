@@ -1,12 +1,12 @@
-# Explorative Scraping Pipeline
+# AI Web Scraping Pipeline
 
 This repository provides an agentic webscraping pipeline for discovering, extracting, reviewing, and storing structured records from public web sources.
 
 Example use cases are scraping news articles, success stories, construction projects, or research articles
 
-The project is a configurable version of an explorative scraping backend. You can define your own scraping engine, domain schema, llm, source URLs, and prompts.
+The project is a configurable AI web scraping backend. You can define your own scraping engine, domain schema, llm, source URLs, and prompts.
 
-![Explorative Scraping Pipeline overview](./Explorative-scraping-pipeline-overview.png)
+![AI Web Scraping Pipeline overview](./ai-web-scraping-pipeline-overview.png)
 
 The diagrams show the full model-enabled pipeline. The implementation uses Azure Functions and Cosmos DB containers for state and handoff; the default deployment does not require a separate Azure Queue Storage resource. Microsoft Foundry or Azure OpenAI deployments are required for useful runtime processing: configure chat extraction, embedding, and groundedness deployments before operational runs.
 
@@ -30,9 +30,11 @@ The pipeline is organized as three logical agents running inside one Azure Funct
 2. **Extraction** is triggered by new candidate documents, fetches each candidate URL, extracts a structured record, and writes review items into the `ReviewQueue` Cosmos DB container.
 3. **Review** is triggered by new review documents, validates required fields, checks duplicate signals, evaluates groundedness against the source text, and stores approved records in the `Records` Cosmos DB container.
 
+The agent business logic lives in `src/pipeline/agents/`. The Azure Function files under `src/functions/` are thin trigger adapters. Prompt templates live in `prompts/` and are referenced from `pipeline.config.json`, so domain instructions can be changed without editing Python code.
+
 The HTTP endpoints let you manually screen sources, extract a single URL, and search approved records. A timer function revisits source pages on a configurable schedule. Cosmos DB stores source registry state, queue documents, review decisions, approved records, run logs, and token usage.
 
-![Explorative Scraping Pipeline details](./Explorative-scraping-pipeline-details.png)
+![AI Web Scraping Pipeline details](./ai-web-scraping-pipeline-details.png)
 
 For a deeper component-level view, see `docs/architecture.md`.
 
@@ -52,11 +54,13 @@ Model deployment is required for the intended pipeline. The template creates the
 
 ## Quick Start
 
+For a concrete local testing walkthrough, including `local.settings.json`, model settings, Azurite, Functions Core Tools, and endpoint calls, see [docs/getting-started-local.md](docs/getting-started-local.md).
+
 ### 1. Clone and install
 
 ```powershell
-git clone https://github.com/flo7up/explorative-scraping-pipeline.git
-cd explorative-scraping-pipeline
+git clone https://github.com/flo7up/ai-web-scraping-pipeline.git
+cd ai-web-scraping-pipeline
 python -m venv .venv
 ./.venv/Scripts/python.exe -m pip install -r requirements.txt -r requirements-dev.txt
 ./.venv/Scripts/python.exe -m pytest
@@ -84,7 +88,7 @@ func start
 
 ## Deploy To Azure
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fflo7up%2Fexplorative-scraping-pipeline%2Fmain%2Finfra%2Fmain.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fflo7up%2Fai-web-scraping-pipeline%2Fmain%2Finfra%2Fmain.json)
 
 The button deploys the generated ARM template in `infra/main.json`. It provisions:
 
@@ -127,7 +131,7 @@ The workflow uses OIDC and does not require publish profiles.
 
 ## Example Use Cases
 
-This repository can power different explorative scraping pipelines by changing config and prompts:
+This repository can power different AI web scraping pipelines by changing config and prompts:
 
 - AI use case discovery, like AIUseCaseHub.com - the scraping engine has been powering the platform for almost a year and so far, scraped more than 2700 ai use cases.
 - Real estate project discovery across developer portfolios, planning portals, construction news, and investment announcements.
@@ -150,6 +154,7 @@ The pipeline behavior is controlled by `pipeline.config.json`:
 - seed URLs and allowed domains
 - output schema fields
 - LLM deployment settings
+- prompt template paths
 - embedding and groundedness deployment settings
 - quality gates, duplicate thresholds, and groundedness behavior
 
@@ -167,7 +172,7 @@ The main baseline cost in the current template is Cosmos DB provisioned throughp
 
 ## One-Click Deploy Button
 
-The portal button is already wired for `flo7up/explorative-scraping-pipeline`. If you fork this repo, update the raw GitHub URL in the README button to point to your fork's `infra/main.json`.
+The portal button is already wired for `flo7up/ai-web-scraping-pipeline`. If you fork this repo, update the raw GitHub URL in the README button to point to your fork's `infra/main.json`.
 
 ## Security
 

@@ -1,5 +1,5 @@
 {
-  "projectName": "explorative-scraping-pipeline",
+  "projectName": "ai-web-scraping-pipeline",
   "recordType": "use_case",
   "domainDescription": "Public examples of enterprise AI deployments and implementation patterns.",
   "sourceDiscovery": {
@@ -39,6 +39,12 @@
     "maxInputChars": 18000,
     "threshold": 3.0,
     "requirePass": false
+  },
+  "prompts": {
+    "extractionSystem": "prompts/extraction.system.md",
+    "extractionUser": "prompts/extraction.user.md",
+    "groundednessSystem": "prompts/groundedness.system.md",
+    "groundednessUser": "prompts/groundedness.user.md"
   },
   "quality": {
     "requireSourceEvidence": true,
