@@ -79,6 +79,7 @@ def generate_search_queries(config: PipelineConfig, source_urls: list[str] | Non
         deployment=deployment,
         temperature=config.llm.temperature,
         agent_name="discovery-agent",
+        tools=[search_google_tool, search_yandex_tool],
     )
     queries = normalize_generated_queries(payload, max_query_count)
     if not queries:
@@ -157,7 +158,9 @@ def yandex_search(query: str, limit: int = 10, timeout: int = 20) -> list[str]:
 
 @agent_tool(name="search_yandex", description="Run a low-volume Yandex web search and return discovered public result URLs as JSON.")
 def search_yandex_tool(query: str, limit: int = 10) -> str:
-    return {"results": yandex_search(query, limit=limit)}
+    import json
+
+    return json.dumps({"results": yandex_search(query, limit=limit)})
 
 
 def extract_google_result_urls(payload: dict, limit: int = 10) -> list[str]:
@@ -198,9 +201,11 @@ def google_search(query: str, config: PipelineConfig, limit: int = 10, timeout: 
 
 @agent_tool(name="search_google", description="Run Google Custom Search and return discovered public result URLs as JSON.")
 def search_google_tool(query: str, limit: int = 10) -> str:
+    import json
+
     from src.pipeline.config import load_config
 
-    return {"results": google_search(query, load_config(), limit=limit)}
+    return json.dumps({"results": google_search(query, load_config(), limit=limit)})
 
 
 def _enqueue_if_allowed(

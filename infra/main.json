@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.43.8.12551",
-      "templateHash": "7061296338717594567"
+      "templateHash": "5613616054997598587"
     }
   },
   "parameters": {
@@ -48,6 +48,13 @@
       "defaultValue": "",
       "metadata": {
         "description": "Azure OpenAI / Foundry model deployment name used for groundedness checks. Leave empty only while provisioning resources before model setup."
+      }
+    },
+    "azureAIProjectEndpoint": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Optional Microsoft Foundry project endpoint used by Microsoft Agent Framework chat calls. Example: https://<account>.services.ai.azure.com/api/projects/<project>."
       }
     },
     "embeddingDimensions": {
@@ -329,56 +336,7 @@
           }
         },
         "siteConfig": {
-          "appSettings": [
-            {
-              "name": "AzureWebJobsStorage",
-              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2023-05-01').keys[0].value)]"
-            },
-            {
-              "name": "FUNCTIONS_EXTENSION_VERSION",
-              "value": "~4"
-            },
-            {
-              "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-              "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName')), '2020-02-02').ConnectionString]"
-            },
-            {
-              "name": "COSMOS_DATABASE_NAME",
-              "value": "[variables('databaseName')]"
-            },
-            {
-              "name": "CosmosDBConnection",
-              "value": "[listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosName')), '2024-05-15').connectionStrings[0].connectionString]"
-            },
-            {
-              "name": "PIPELINE_CONFIG_PATH",
-              "value": "pipeline.config.json"
-            },
-            {
-              "name": "SOURCE_REFRESH_CRON",
-              "value": "0 0 3 * * *"
-            },
-            {
-              "name": "MAX_LINKS_PER_SOURCE",
-              "value": "25"
-            },
-            {
-              "name": "AZURE_OPENAI_ENDPOINT",
-              "value": "[if(parameters('createAzureAI'), reference(resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName')), '2024-10-01').endpoint, '')]"
-            },
-            {
-              "name": "AZURE_OPENAI_DEPLOYMENT",
-              "value": "[parameters('azureOpenAIDeployment')]"
-            },
-            {
-              "name": "AZURE_OPENAI_EMBEDDING_DEPLOYMENT",
-              "value": "[parameters('azureOpenAIEmbeddingDeployment')]"
-            },
-            {
-              "name": "AZURE_OPENAI_GROUNDEDNESS_DEPLOYMENT",
-              "value": "[parameters('azureOpenAIGroundednessDeployment')]"
-            }
-          ]
+          "appSettings": "[concat(createArray(createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2023-05-01').keys[0].value)), createObject('name', 'FUNCTIONS_EXTENSION_VERSION', 'value', '~4'), createObject('name', 'APPLICATIONINSIGHTS_CONNECTION_STRING', 'value', reference(resourceId('Microsoft.Insights/components', variables('appInsightsName')), '2020-02-02').ConnectionString), createObject('name', 'COSMOS_DATABASE_NAME', 'value', variables('databaseName')), createObject('name', 'CosmosDBConnection', 'value', listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosName')), '2024-05-15').connectionStrings[0].connectionString), createObject('name', 'PIPELINE_CONFIG_PATH', 'value', 'pipeline.config.json'), createObject('name', 'SOURCE_REFRESH_CRON', 'value', '0 0 3 * * *'), createObject('name', 'MAX_LINKS_PER_SOURCE', 'value', '25'), createObject('name', 'AZURE_OPENAI_ENDPOINT', 'value', if(parameters('createAzureAI'), reference(resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName')), '2024-10-01').endpoint, '')), createObject('name', 'AZURE_OPENAI_DEPLOYMENT', 'value', parameters('azureOpenAIDeployment')), createObject('name', 'AZURE_OPENAI_EMBEDDING_DEPLOYMENT', 'value', parameters('azureOpenAIEmbeddingDeployment')), createObject('name', 'AZURE_OPENAI_GROUNDEDNESS_DEPLOYMENT', 'value', parameters('azureOpenAIGroundednessDeployment'))), if(empty(parameters('azureAIProjectEndpoint')), createArray(), createArray(createObject('name', 'AZURE_AI_PROJECT_ENDPOINT', 'value', parameters('azureAIProjectEndpoint')))))]"
         }
       },
       "dependsOn": [

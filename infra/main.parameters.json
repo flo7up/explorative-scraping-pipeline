@@ -20,6 +20,9 @@
     "azureOpenAIGroundednessDeployment": {
       "value": ""
     },
+    "azureAIProjectEndpoint": {
+      "value": ""
+    },
     "embeddingDimensions": {
       "value": 3072
     }

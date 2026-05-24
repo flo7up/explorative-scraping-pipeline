@@ -1,3 +1,4 @@
+from src.pipeline.agents import review_agent
 from src.pipeline.config import PipelineConfig, SchemaConfig, SchemaField
 from src.pipeline.deduplication import (
     build_duplicate_decision,
@@ -7,7 +8,6 @@ from src.pipeline.deduplication import (
 )
 from src.pipeline.embeddings import build_provider_neutral_embedding_text
 from src.pipeline.groundedness import deterministic_groundedness, evaluate_groundedness
-from src.pipeline.agents import review_agent
 from src.pipeline.models import ExtractedRecord
 from src.pipeline.review import review_record
 

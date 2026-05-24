@@ -6,6 +6,7 @@ from src.pipeline.agents.discovery_agent import (
     is_allowed_url,
     normalize_generated_queries,
     screen_sources,
+    search_yandex_tool,
     yandex_search,
 )
 from src.pipeline.config import PipelineConfig, SourceDiscoveryConfig
@@ -77,6 +78,7 @@ def test_generate_search_queries_uses_llm_prompt(monkeypatch):
     def fake_chat_json(system_prompt, user_prompt, **kwargs):
         captured["system"] = system_prompt
         captured["user"] = user_prompt
+        captured["tools"] = kwargs.get("tools")
         return {"queries": ["site:example.com case studies", "public case studies"]}
 
     monkeypatch.setattr("src.pipeline.agents.discovery_agent.chat_json", fake_chat_json)
@@ -86,6 +88,13 @@ def test_generate_search_queries_uses_llm_prompt(monkeypatch):
 
     assert queries == ["site:example.com case studies", "public case studies"]
     assert "Public case studies" in captured["user"]
+    assert len(captured["tools"]) == 2
+
+
+def test_search_yandex_tool_returns_json_string(monkeypatch):
+    monkeypatch.setattr("src.pipeline.agents.discovery_agent.yandex_search", lambda query, limit=10: ["https://example.com/case"])
+    result = search_yandex_tool("test", limit=1)
+    assert result == '{"results": ["https://example.com/case"]}'
 
 
 def test_screen_sources_generates_queries_when_search_queries_are_empty(monkeypatch):

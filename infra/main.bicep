@@ -18,6 +18,9 @@ param azureOpenAIEmbeddingDeployment string = ''
 @description('Azure OpenAI / Foundry model deployment name used for groundedness checks. Leave empty only while provisioning resources before model setup.')
 param azureOpenAIGroundednessDeployment string = ''
 
+@description('Optional Microsoft Foundry project endpoint used by Microsoft Agent Framework chat calls. Example: https://<account>.services.ai.azure.com/api/projects/<project>.')
+param azureAIProjectEndpoint string = ''
+
 @description('Embedding dimensions for the Records container vector policy. Match the configured embedding model deployment.')
 @minValue(1)
 param embeddingDimensions int = 3072
@@ -32,6 +35,26 @@ var aiServicesName = take('ai-${environmentName}-${take(unique, 6)}', 64)
 var planName = 'plan-${environmentName}'
 var functionName = 'func-${environmentName}-${take(unique, 6)}'
 var databaseName = 'explorative-pipeline'
+var baseFunctionAppSettings = [
+  { name: 'AzureWebJobsStorage', value: 'DefaultEndpointsProtocol=https;AccountName=${storageName};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storage.listKeys().keys[0].value}' }
+  { name: 'FUNCTIONS_EXTENSION_VERSION', value: '~4' }
+  { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsights.properties.ConnectionString }
+  { name: 'COSMOS_DATABASE_NAME', value: databaseName }
+  { name: 'CosmosDBConnection', value: cosmos.listConnectionStrings().connectionStrings[0].connectionString }
+  { name: 'PIPELINE_CONFIG_PATH', value: 'pipeline.config.json' }
+  { name: 'SOURCE_REFRESH_CRON', value: '0 0 3 * * *' }
+  { name: 'MAX_LINKS_PER_SOURCE', value: '25' }
+  { name: 'AZURE_OPENAI_ENDPOINT', value: createAzureAI ? aiServices!.properties.endpoint : '' }
+  { name: 'AZURE_OPENAI_DEPLOYMENT', value: azureOpenAIDeployment }
+  { name: 'AZURE_OPENAI_EMBEDDING_DEPLOYMENT', value: azureOpenAIEmbeddingDeployment }
+  { name: 'AZURE_OPENAI_GROUNDEDNESS_DEPLOYMENT', value: azureOpenAIGroundednessDeployment }
+]
+var functionAppSettings = concat(
+  baseFunctionAppSettings,
+  empty(azureAIProjectEndpoint) ? [] : [
+    { name: 'AZURE_AI_PROJECT_ENDPOINT', value: azureAIProjectEndpoint }
+  ]
+)
 
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageName
@@ -241,20 +264,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
       }
     }
     siteConfig: {
-      appSettings: [
-        { name: 'AzureWebJobsStorage', value: 'DefaultEndpointsProtocol=https;AccountName=${storage.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storage.listKeys().keys[0].value}' }
-        { name: 'FUNCTIONS_EXTENSION_VERSION', value: '~4' }
-        { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsights.properties.ConnectionString }
-        { name: 'COSMOS_DATABASE_NAME', value: databaseName }
-        { name: 'CosmosDBConnection', value: cosmos.listConnectionStrings().connectionStrings[0].connectionString }
-        { name: 'PIPELINE_CONFIG_PATH', value: 'pipeline.config.json' }
-        { name: 'SOURCE_REFRESH_CRON', value: '0 0 3 * * *' }
-        { name: 'MAX_LINKS_PER_SOURCE', value: '25' }
-        { name: 'AZURE_OPENAI_ENDPOINT', value: createAzureAI ? aiServices!.properties.endpoint : '' }
-        { name: 'AZURE_OPENAI_DEPLOYMENT', value: azureOpenAIDeployment }
-        { name: 'AZURE_OPENAI_EMBEDDING_DEPLOYMENT', value: azureOpenAIEmbeddingDeployment }
-        { name: 'AZURE_OPENAI_GROUNDEDNESS_DEPLOYMENT', value: azureOpenAIGroundednessDeployment }
-      ]
+      appSettings: functionAppSettings
     }
   }
 }

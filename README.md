@@ -61,7 +61,7 @@ Default deployment provisions:
 
 Model deployment is required for the intended pipeline. The template creates the Azure AI Services/Foundry-capable resource, but it does not create model deployments for you. Before running real scraping jobs, deploy the models you want to use and set `AZURE_OPENAI_DEPLOYMENT`, `AZURE_OPENAI_EMBEDDING_DEPLOYMENT`, and `AZURE_OPENAI_GROUNDEDNESS_DEPLOYMENT`. Leaving deployment names empty is only useful for infrastructure smoke tests, not for high-quality extraction and review.
 
-For Microsoft Agent Framework-backed chat calls, also set `AZURE_AI_PROJECT_ENDPOINT` to your Foundry project endpoint. If it is not set, the repo uses the Azure OpenAI-compatible endpoint path configured by `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY`.
+For Microsoft Agent Framework-backed chat calls, also set `AZURE_AI_PROJECT_ENDPOINT` to your Foundry project endpoint and grant the Function App managed identity Foundry agent permissions. If it is not set, the repo uses the Azure OpenAI-compatible endpoint path configured by `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY`. See [docs/deployment.md](docs/deployment.md) for the RBAC steps.
 
 ## Quick Start
 

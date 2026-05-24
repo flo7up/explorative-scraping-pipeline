@@ -52,9 +52,64 @@ After deployment:
 2. Deploy a chat model and set `AZURE_OPENAI_DEPLOYMENT` to the model deployment name.
 3. Deploy an embedding model and set `AZURE_OPENAI_EMBEDDING_DEPLOYMENT` for vector duplicate detection.
 4. Deploy a groundedness model and set `AZURE_OPENAI_GROUNDEDNESS_DEPLOYMENT` for model-based groundedness checks.
-5. Restart the Function App.
+5. To use Microsoft Agent Framework for chat-style agent calls, set `AZURE_AI_PROJECT_ENDPOINT` to the Foundry project endpoint.
+6. Grant the Function App managed identity permission to create and run Foundry agents on that project.
+7. Restart the Function App.
 
 Without these deployment settings, the Azure resources can exist but the pipeline is not ready for useful extraction, embedding-based duplicate review, or groundedness evaluation.
+
+### Microsoft Agent Framework RBAC
+
+When `AZURE_AI_PROJECT_ENDPOINT` is set, the Function App uses its managed identity to create short-lived Foundry agents. The identity needs Foundry project data-plane permissions, including `Microsoft.CognitiveServices/accounts/AIServices/agents/write`.
+
+Some tenants may not have a built-in role that includes the exact agent data actions yet. The following PowerShell creates a tightly scoped custom role for one Foundry project and assigns it to the Function App identity:
+
+```powershell
+$subscriptionId = "<subscription-id>"
+$functionResourceGroup = "<function-app-resource-group>"
+$functionAppName = "<function-app-name>"
+$foundryProjectResourceId = "/subscriptions/<subscription-id>/resourceGroups/<foundry-rg>/providers/Microsoft.CognitiveServices/accounts/<foundry-account>/projects/<project-name>"
+$roleName = "AI Foundry Agents Operator"
+
+$principalId = az functionapp identity show `
+	--subscription $subscriptionId `
+	--resource-group $functionResourceGroup `
+	--name $functionAppName `
+	--query principalId `
+	--output tsv
+
+$role = @{
+	Name = $roleName
+	IsCustom = $true
+	Description = "Scoped access for an Azure Function App to create and run Microsoft Foundry agents."
+	Actions = @("Microsoft.CognitiveServices/accounts/projects/read")
+	NotActions = @()
+	DataActions = @(
+		"Microsoft.CognitiveServices/accounts/AIServices/agents/read",
+		"Microsoft.CognitiveServices/accounts/AIServices/agents/write",
+		"Microsoft.CognitiveServices/accounts/AIServices/agents/delete",
+		"Microsoft.CognitiveServices/accounts/AIServices/agents/*"
+	)
+	NotDataActions = @()
+	AssignableScopes = @($foundryProjectResourceId)
+}
+
+$path = Join-Path $env:TEMP "ai-foundry-agents-operator.json"
+$role | ConvertTo-Json -Depth 10 | Set-Content -Path $path -Encoding utf8
+if (az role definition list --name $roleName --query "[0].name" --output tsv) {
+	az role definition update --role-definition $path
+} else {
+	az role definition create --role-definition $path
+}
+
+az role assignment create `
+	--assignee-object-id $principalId `
+	--assignee-principal-type ServicePrincipal `
+	--role $roleName `
+	--scope $foundryProjectResourceId
+```
+
+Role assignment propagation can take several minutes. Restart the Function App after assigning the role so managed identity tokens are refreshed.
 
 ## Local Development
 

@@ -4,7 +4,8 @@ import json
 import logging
 import os
 import re
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -41,14 +42,14 @@ def _parse_json_response(text: str) -> dict[str, Any] | None:
     except json.JSONDecodeError:
         pass
 
-    match = re.search(r"\{.*\}", text, flags=re.DOTALL)
-    if not match:
-        return None
-    try:
-        value = json.loads(match.group(0))
+    decoder = json.JSONDecoder()
+    for match in re.finditer(r"[\{\[]", text):
+        try:
+            value, _ = decoder.raw_decode(text[match.start() :])
+        except json.JSONDecodeError:
+            continue
         return value if isinstance(value, dict) else {"value": value}
-    except json.JSONDecodeError:
-        return None
+    return None
 
 
 async def _close_async_resource(resource: Any) -> None:
@@ -70,8 +71,8 @@ async def _run_agent_async(
     deployment: str,
     tools: list[Callable] | None = None,
 ) -> dict[str, Any] | None:
-    from azure.identity.aio import DefaultAzureCredential
     from agent_framework.azure import AzureAIAgentClient
+    from azure.identity.aio import DefaultAzureCredential
 
     project_endpoint = os.getenv("AZURE_AI_PROJECT_ENDPOINT", "").strip()
     if not project_endpoint:
