@@ -5,15 +5,17 @@ The primary configuration file is `pipeline.config.json`.
 ## Source Discovery
 
 - `seedUrls`: starting pages for exploration.
-- `searchProvider`: optional search provider for discovery. Supported values: `none`, `yandex`.
-- `searchQueries`: search queries to run when `searchProvider` is `yandex`.
+- `searchProvider`: optional search provider for discovery. Supported values: `none`, `google`, `yandex`.
+- `searchQueries`: search queries to run when `searchProvider` is `google` or `yandex`.
 - `searchMaxResults`: maximum search results to inspect per query.
+- `googleApiKeyEnv`: environment variable containing the Google Custom Search API key. Default: `GOOGLE_SEARCH_API_KEY`.
+- `googleSearchEngineIdEnv`: environment variable containing the Google Programmable Search Engine ID. Default: `GOOGLE_SEARCH_ENGINE_ID`.
 - `allowedDomains`: optional domain allow-list.
 - `blockedDomains`: domain block-list.
 - `revisitFrequencyDays`: when source pages become due again.
 - `maxLinksPerSource`: candidate cap per source page.
 
-Yandex search support is intended for low-volume test and demo runs. Search result pages can change or throttle automated requests, so keep `maxLinksPerSource` and `searchMaxResults` small and fall back to explicit `seedUrls` for repeatable production runs.
+Google Custom Search is recommended for reliable search-based discovery because it provides a supported API, stable JSON responses, and clearer quota/error behavior. Yandex search support is intended for low-volume test and demo runs only. Search result pages can change, throttle automated requests, or return captcha challenges, so keep `maxLinksPerSource` and `searchMaxResults` small and fall back to explicit `seedUrls` for repeatable production runs.
 
 ## Schema
 
@@ -24,6 +26,8 @@ Schema fields describe the target record. Required fields are enforced by the re
 - `deploymentNameEnv`: app setting that contains the Azure OpenAI deployment name.
 - `maxInputChars`: source text truncation to control cost.
 - `temperature`: keep low for structured extraction.
+
+`allowDeterministicFallbackForSmokeTests` defaults to `false`. Keep it disabled for operational runs so missing model deployments fail fast instead of silently producing low-quality deterministic records. Enable it only for infrastructure smoke tests that intentionally avoid model calls.
 
 ## Prompt Templates
 

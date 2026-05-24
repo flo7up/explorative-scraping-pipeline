@@ -6,7 +6,7 @@ from src.pipeline.deduplication import (
     source_url_hash,
 )
 from src.pipeline.embeddings import build_provider_neutral_embedding_text
-from src.pipeline.groundedness import deterministic_groundedness
+from src.pipeline.groundedness import deterministic_groundedness, evaluate_groundedness
 from src.pipeline.models import ExtractedRecord
 from src.pipeline.review import review_record
 
@@ -80,3 +80,15 @@ def test_duplicate_decision_uses_exact_source_identity():
     assert normalize_source_url(record["sourceUrl"]) == "https://example.com/case"
     assert decision is not None
     assert decision["matchedRecordId"] == "existing"
+
+
+def test_groundedness_requires_model_deployment_by_default(monkeypatch):
+    monkeypatch.delenv("AZURE_OPENAI_GROUNDEDNESS_DEPLOYMENT", raising=False)
+    record = ExtractedRecord(recordType="case", title="A title", summary="summary", sourceUrl="https://example.com")
+
+    try:
+        evaluate_groundedness(record, "summary", PipelineConfig())
+    except RuntimeError as exc:
+        assert "AZURE_OPENAI_GROUNDEDNESS_DEPLOYMENT" in str(exc)
+    else:
+        raise AssertionError("Expected missing groundedness deployment to fail by default")

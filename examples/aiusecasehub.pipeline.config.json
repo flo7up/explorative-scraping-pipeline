@@ -8,6 +8,11 @@
       "https://aws.amazon.com/solutions/case-studies/",
       "https://cloud.google.com/customers"
     ],
+    "searchProvider": "none",
+    "searchQueries": [],
+    "searchMaxResults": 10,
+    "googleApiKeyEnv": "GOOGLE_SEARCH_API_KEY",
+    "googleSearchEngineIdEnv": "GOOGLE_SEARCH_ENGINE_ID",
     "allowedDomains": [
       "microsoft.com",
       "aws.amazon.com",
@@ -48,5 +53,6 @@
     "requireSourceEvidence": true,
     "reviewBeforeStore": true,
     "duplicateDetection": true
-  }
+  },
+  "allowDeterministicFallbackForSmokeTests": false
 }

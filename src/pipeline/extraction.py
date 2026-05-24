@@ -49,7 +49,9 @@ def _normalize_confidence(value: object) -> float:
 def llm_extract(url: str, title: str, text: str, config: PipelineConfig) -> ExtractedRecord | None:
     deployment = os.getenv(config.llm.deploymentNameEnv)
     if not deployment:
-        return None
+        if config.allowDeterministicFallbackForSmokeTests:
+            return None
+        raise RuntimeError(f"Set {config.llm.deploymentNameEnv} to a chat model deployment name before running extraction.")
 
     prompt_values = {
         "domainDescription": config.domainDescription,
@@ -64,7 +66,9 @@ def llm_extract(url: str, title: str, text: str, config: PipelineConfig) -> Extr
 
     data = chat_json(system_prompt, user_prompt, deployment=deployment, temperature=config.llm.temperature)
     if not data:
-        return None
+        if config.allowDeterministicFallbackForSmokeTests:
+            return None
+        raise RuntimeError("LLM extraction returned no structured JSON payload.")
     if not data.get("sourceUrl"):
         data["sourceUrl"] = url
     if not data.get("recordType"):
@@ -83,4 +87,9 @@ def llm_extract(url: str, title: str, text: str, config: PipelineConfig) -> Extr
 
 
 def extract_record(url: str, title: str, text: str, config: PipelineConfig) -> ExtractedRecord:
-    return llm_extract(url, title, text, config) or deterministic_extract(url, title, text, config)
+    record = llm_extract(url, title, text, config)
+    if record:
+        return record
+    if config.allowDeterministicFallbackForSmokeTests:
+        return deterministic_extract(url, title, text, config)
+    raise RuntimeError("LLM extraction did not produce a record.")

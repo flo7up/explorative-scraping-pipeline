@@ -61,7 +61,9 @@ Edit `local.settings.json` and fill in these values:
     "AZURE_OPENAI_DEPLOYMENT": "<chat-model-deployment>",
     "AZURE_OPENAI_EMBEDDING_DEPLOYMENT": "<embedding-model-deployment>",
     "AZURE_OPENAI_GROUNDEDNESS_DEPLOYMENT": "<groundedness-model-deployment>",
-    "AZURE_OPENAI_API_KEY": "<local-dev-api-key>"
+    "AZURE_OPENAI_API_KEY": "<local-dev-api-key>",
+    "GOOGLE_SEARCH_API_KEY": "<google-custom-search-api-key>",
+    "GOOGLE_SEARCH_ENGINE_ID": "<google-programmable-search-engine-id>"
   }
 }
 ```
@@ -92,7 +94,7 @@ Edit `pipeline.config.json`:
 - `schema.fields`: define the structured fields you expect.
 - `prompts`: point to prompt files under `prompts/`.
 
-For a first local run, use one or two seed pages and a small link cap. This prevents accidental large crawls and keeps model costs predictable.
+For a first local run, use one or two seed pages and a small link cap. This prevents accidental large crawls and keeps model costs predictable. For reliable search-based discovery, set `sourceDiscovery.searchProvider` to `google` and configure `GOOGLE_SEARCH_API_KEY` plus `GOOGLE_SEARCH_ENGINE_ID`. Yandex can be useful for small demos, but it may return captcha challenges instead of usable results.
 
 ## 6. Customize Prompts
 
@@ -164,7 +166,22 @@ Invoke-RestMethod -Method POST `
   -Body $body
 ```
 
-To test Yandex-based discovery without changing `pipeline.config.json`, pass query overrides in the request body:
+To test Google-based discovery without changing `pipeline.config.json`, pass query overrides in the request body after setting `GOOGLE_SEARCH_API_KEY` and `GOOGLE_SEARCH_ENGINE_ID`:
+
+```powershell
+$body = @{
+  searchProvider = "google"
+  queries = @("site:example.com Example Domain")
+  maxLinks = 1
+} | ConvertTo-Json
+
+Invoke-RestMethod -Method POST `
+  -Uri "http://localhost:7071/api/screen-sources" `
+  -ContentType "application/json" `
+  -Body $body
+```
+
+To test Yandex-based discovery for a low-volume demo, pass query overrides in the request body:
 
 ```powershell
 $body = @{
@@ -179,7 +196,7 @@ Invoke-RestMethod -Method POST `
   -Body $body
 ```
 
-Yandex search is best for small smoke tests. For repeatable production runs, prefer curated `seedUrls` and domain allow-lists.
+Google Custom Search is recommended for repeatable discovery. Yandex search is best for small smoke tests and may return `blocked_or_challenged` diagnostics if it serves a captcha page. For repeatable production runs, prefer Google Custom Search or curated `seedUrls` and domain allow-lists.
 
 After this succeeds, check the `CandidateQueue` container in Cosmos DB. The candidate trigger should process queued candidates when the Functions host is running and the Cosmos DB trigger connection is valid.
 

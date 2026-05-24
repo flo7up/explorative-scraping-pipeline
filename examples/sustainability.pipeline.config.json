@@ -4,6 +4,11 @@
   "domainDescription": "Public sustainability, climate, ESG, resource-efficiency, and environmental monitoring projects.",
   "sourceDiscovery": {
     "seedUrls": [],
+    "searchProvider": "none",
+    "searchQueries": [],
+    "searchMaxResults": 10,
+    "googleApiKeyEnv": "GOOGLE_SEARCH_API_KEY",
+    "googleSearchEngineIdEnv": "GOOGLE_SEARCH_ENGINE_ID",
     "allowedDomains": [],
     "blockedDomains": [],
     "revisitFrequencyDays": 30,
@@ -37,5 +42,6 @@
     "requireSourceEvidence": true,
     "reviewBeforeStore": true,
     "duplicateDetection": true
-  }
+  },
+  "allowDeterministicFallbackForSmokeTests": false
 }

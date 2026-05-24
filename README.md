@@ -74,7 +74,7 @@ Edit `pipeline.config.json`:
 
 - `domainDescription`: what kind of records you want to find
 - `sourceDiscovery.seedUrls`: starting pages to explore
-- `sourceDiscovery.searchProvider` and `sourceDiscovery.searchQueries`: optional low-volume Yandex search discovery for tests and demos
+- `sourceDiscovery.searchProvider` and `sourceDiscovery.searchQueries`: search-based discovery settings. Google Custom Search with `GOOGLE_SEARCH_API_KEY` and `GOOGLE_SEARCH_ENGINE_ID` is recommended for reliable discovery; Yandex is best treated as a low-volume demo fallback because it may return captcha challenges.
 - `sourceDiscovery.allowedDomains`: optional domain allow-list
 - `schema.fields`: the structured output fields
 

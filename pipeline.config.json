@@ -7,6 +7,8 @@
     "searchProvider": "none",
     "searchQueries": [],
     "searchMaxResults": 10,
+    "googleApiKeyEnv": "GOOGLE_SEARCH_API_KEY",
+    "googleSearchEngineIdEnv": "GOOGLE_SEARCH_ENGINE_ID",
     "allowedDomains": [],
     "blockedDomains": [],
     "revisitFrequencyDays": 14,
@@ -56,5 +58,6 @@
     "duplicateSimilarityThreshold": 0.85,
     "duplicateConfidenceThreshold": 0.9,
     "duplicateCandidateLimit": 8
-  }
+  },
+  "allowDeterministicFallbackForSmokeTests": false
 }

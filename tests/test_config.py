@@ -7,7 +7,9 @@ def test_default_config_has_safe_values():
     config = PipelineConfig()
     assert config.projectName == "ai-web-scraping-pipeline"
     assert config.sourceDiscovery.revisitFrequencyDays >= 1
+    assert config.sourceDiscovery.googleApiKeyEnv == "GOOGLE_SEARCH_API_KEY"
     assert config.prompts.extractionSystem == "prompts/extraction.system.md"
+    assert config.allowDeterministicFallbackForSmokeTests is False
     assert config.quality.reviewBeforeStore is True
 
 

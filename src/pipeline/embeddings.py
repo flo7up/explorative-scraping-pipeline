@@ -121,20 +121,20 @@ def create_embedding(content: str, config: PipelineConfig) -> list[float]:
 
     deployment = os.getenv(config.embedding.deploymentNameEnv)
     if not deployment:
-        return []
+        raise RuntimeError(f"Set {config.embedding.deploymentNameEnv} to an embedding model deployment name before review.")
 
     client = azure_openai_client()
     if client is None:
-        return []
+        raise RuntimeError("Set AZURE_OPENAI_ENDPOINT before creating embeddings.")
 
     try:
         response = client.embeddings.create(input=normalize_text(content), model=deployment)
     except Exception as exc:
         logger.warning("Embedding creation failed: %s: %s", type(exc).__name__, exc)
-        return []
+        raise
 
     if not response.data:
-        return []
+        raise RuntimeError("Embedding model returned no vectors.")
     return list(response.data[0].embedding or [])
 
 

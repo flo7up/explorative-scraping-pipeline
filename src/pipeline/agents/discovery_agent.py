@@ -14,6 +14,27 @@ YANDEX_SEARCH_URLS = (YANDEX_SEARCH_URL, "https://yandex.com/search/", "https://
 YANDEX_HOST_SUFFIXES = ("yandex.com", "yandex.eu", "yandex.ru")
 YANDEX_INTERNAL_HOST_MARKERS = ("yandex.", "yandexcloud.")
 SEARCH_USER_AGENT = "ai-web-scraping-pipeline/0.1"
+GOOGLE_SEARCH_URL = "https://www.googleapis.com/customsearch/v1"
+
+
+class SearchProviderError(RuntimeError):
+    provider: str
+    status: str
+
+    def __init__(self, provider: str, status: str, message: str) -> None:
+        super().__init__(message)
+        self.provider = provider
+        self.status = status
+
+
+class SearchProviderBlockedError(SearchProviderError):
+    def __init__(self, provider: str, message: str) -> None:
+        super().__init__(provider, "blocked_or_challenged", message)
+
+
+class SearchProviderConfigurationError(SearchProviderError):
+    def __init__(self, provider: str, message: str) -> None:
+        super().__init__(provider, "not_configured", message)
 
 
 def is_allowed_url(url: str, allowed_domains: list[str], blocked_domains: list[str]) -> bool:
@@ -55,8 +76,14 @@ def extract_yandex_result_urls(html: str, base_url: str = YANDEX_SEARCH_URL, lim
     return results
 
 
+def _is_yandex_challenge_page(html: str) -> bool:
+    text = html.lower()
+    return "smartcaptcha" in text or "showcaptcha" in text or "captcha" in text
+
+
 def yandex_search(query: str, limit: int = 10, timeout: int = 20) -> list[str]:
     last_error: Exception | None = None
+    challenged = False
     for search_url in YANDEX_SEARCH_URLS:
         try:
             response = requests.get(
@@ -66,12 +93,55 @@ def yandex_search(query: str, limit: int = 10, timeout: int = 20) -> list[str]:
                 headers={"User-Agent": SEARCH_USER_AGENT},
             )
             response.raise_for_status()
+            if _is_yandex_challenge_page(response.text):
+                challenged = True
+                continue
             return extract_yandex_result_urls(response.text, response.url, limit=limit)
         except requests.RequestException as exc:
             last_error = exc
+    if challenged:
+        raise SearchProviderBlockedError("yandex", "Yandex returned a captcha or challenge page. Use curated seedUrls or Google Custom Search for reliable production discovery.")
     if last_error:
         raise last_error
     return []
+
+
+def extract_google_result_urls(payload: dict, limit: int = 10) -> list[str]:
+    results: list[str] = []
+    for item in payload.get("items") or []:
+        link = item.get("link")
+        if not link:
+            continue
+        parsed = urlparse(link)
+        if parsed.scheme not in {"http", "https"}:
+            continue
+        normalized = parsed._replace(fragment="").geturl()
+        if normalized not in results:
+            results.append(normalized)
+        if len(results) >= limit:
+            break
+    return results
+
+
+def google_search(query: str, config: PipelineConfig, limit: int = 10, timeout: int = 20) -> list[str]:
+    import os
+
+    api_key = os.getenv(config.sourceDiscovery.googleApiKeyEnv)
+    search_engine_id = os.getenv(config.sourceDiscovery.googleSearchEngineIdEnv)
+    if not api_key or not search_engine_id:
+        raise SearchProviderConfigurationError(
+            "google",
+            f"Set {config.sourceDiscovery.googleApiKeyEnv} and {config.sourceDiscovery.googleSearchEngineIdEnv} for Google Custom Search discovery.",
+        )
+
+    response = requests.get(
+        GOOGLE_SEARCH_URL,
+        params={"key": api_key, "cx": search_engine_id, "q": query, "num": max(1, min(limit, 10))},
+        timeout=timeout,
+        headers={"User-Agent": SEARCH_USER_AGENT},
+    )
+    response.raise_for_status()
+    return extract_google_result_urls(response.json(), limit=limit)
 
 
 def _enqueue_if_allowed(
@@ -94,6 +164,7 @@ def screen_sources(
     config: PipelineConfig,
     search_queries: list[str] | None = None,
     search_provider: str | None = None,
+    search_diagnostics: list[dict] | None = None,
 ) -> list[CandidateRecord]:
     queued: list[CandidateRecord] = []
 
@@ -110,12 +181,29 @@ def screen_sources(
 
     provider = search_provider or config.sourceDiscovery.searchProvider
     queries = config.sourceDiscovery.searchQueries if search_queries is None else search_queries
-    if provider == "yandex":
+    if provider in {"yandex", "google"}:
         for query in queries:
             if len(queued) >= max_links:
                 break
-            for link in yandex_search(query, limit=config.sourceDiscovery.searchMaxResults):
-                _enqueue_if_allowed(link, f"yandex:{query}", config, queued, max_links)
+            try:
+                links = (
+                    yandex_search(query, limit=config.sourceDiscovery.searchMaxResults)
+                    if provider == "yandex"
+                    else google_search(query, config, limit=config.sourceDiscovery.searchMaxResults)
+                )
+                if search_diagnostics is not None:
+                    search_diagnostics.append({"provider": provider, "query": query, "status": "ok", "resultCount": len(links)})
+            except SearchProviderError as exc:
+                if search_diagnostics is not None:
+                    search_diagnostics.append({"provider": exc.provider, "query": query, "status": exc.status, "message": str(exc)})
+                continue
+            except requests.RequestException as exc:
+                if search_diagnostics is not None:
+                    search_diagnostics.append({"provider": provider, "query": query, "status": "request_failed", "message": str(exc)})
+                continue
+
+            for link in links:
+                _enqueue_if_allowed(link, f"{provider}:{query}", config, queued, max_links)
                 if len(queued) >= max_links:
                     break
 

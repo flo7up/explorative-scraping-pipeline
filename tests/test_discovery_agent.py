@@ -1,4 +1,10 @@
-from src.pipeline.agents.discovery_agent import extract_yandex_result_urls, is_allowed_url
+from src.pipeline.agents.discovery_agent import (
+    SearchProviderBlockedError,
+    extract_google_result_urls,
+    extract_yandex_result_urls,
+    is_allowed_url,
+    yandex_search,
+)
 from src.pipeline.config import PipelineConfig, SourceDiscoveryConfig
 
 
@@ -24,3 +30,33 @@ def test_allowed_url_respects_allow_and_block_lists():
     assert is_allowed_url("https://news.example.com/case", config.sourceDiscovery.allowedDomains, config.sourceDiscovery.blockedDomains)
     assert not is_allowed_url("https://blocked.example.com/case", config.sourceDiscovery.allowedDomains, config.sourceDiscovery.blockedDomains)
     assert not is_allowed_url("https://example.org/case", config.sourceDiscovery.allowedDomains, config.sourceDiscovery.blockedDomains)
+
+
+def test_yandex_search_reports_challenge_pages(monkeypatch):
+    class Response:
+        url = "https://yandex.eu/search/?text=test"
+        text = "<html>smartcaptcha</html>"
+
+        def raise_for_status(self):
+            return None
+
+    monkeypatch.setattr("src.pipeline.agents.discovery_agent.requests.get", lambda *args, **kwargs: Response())
+
+    try:
+        yandex_search("test", limit=1)
+    except SearchProviderBlockedError as exc:
+        assert exc.status == "blocked_or_challenged"
+    else:
+        raise AssertionError("Expected Yandex challenge pages to raise SearchProviderBlockedError")
+
+
+def test_extract_google_result_urls():
+    payload = {
+        "items": [
+            {"link": "https://example.com/a#fragment"},
+            {"link": "https://example.com/a"},
+            {"link": "not-a-url"},
+            {"link": "https://example.org/b"},
+        ]
+    }
+    assert extract_google_result_urls(payload, limit=5) == ["https://example.com/a", "https://example.org/b"]

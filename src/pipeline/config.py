@@ -19,9 +19,11 @@ class SchemaConfig(BaseModel):
 
 class SourceDiscoveryConfig(BaseModel):
     seedUrls: list[str] = Field(default_factory=list)
-    searchProvider: Literal["none", "yandex"] = "none"
+    searchProvider: Literal["none", "yandex", "google"] = "none"
     searchQueries: list[str] = Field(default_factory=list)
     searchMaxResults: int = 10
+    googleApiKeyEnv: str = "GOOGLE_SEARCH_API_KEY"
+    googleSearchEngineIdEnv: str = "GOOGLE_SEARCH_ENGINE_ID"
     allowedDomains: list[str] = Field(default_factory=list)
     blockedDomains: list[str] = Field(default_factory=list)
     revisitFrequencyDays: int = 14
@@ -80,6 +82,7 @@ class PipelineConfig(BaseModel):
     groundedness: GroundednessConfig = Field(default_factory=GroundednessConfig)
     prompts: PromptConfig = Field(default_factory=PromptConfig)
     quality: QualityConfig = Field(default_factory=QualityConfig)
+    allowDeterministicFallbackForSmokeTests: bool = False
 
 
 @lru_cache(maxsize=1)

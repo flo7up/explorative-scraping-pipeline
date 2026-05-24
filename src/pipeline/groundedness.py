@@ -89,7 +89,9 @@ def deterministic_groundedness(record: ExtractedRecord | dict[str, Any], source_
 def llm_groundedness(record: ExtractedRecord | dict[str, Any], source_text: str, config: PipelineConfig) -> dict[str, Any] | None:
     deployment = os.getenv(config.groundedness.deploymentNameEnv)
     if not deployment:
-        return None
+        if config.allowDeterministicFallbackForSmokeTests:
+            return None
+        raise RuntimeError(f"Set {config.groundedness.deploymentNameEnv} to a groundedness model deployment name before review.")
 
     prompt_values = {
         "groundednessThreshold": config.groundedness.threshold,
@@ -103,10 +105,14 @@ def llm_groundedness(record: ExtractedRecord | dict[str, Any], source_text: str,
         result = chat_json(system_prompt, user_prompt, deployment=deployment, temperature=0)
     except Exception as exc:
         logger.warning("LLM groundedness check failed: %s: %s", type(exc).__name__, exc)
-        return None
+        if config.allowDeterministicFallbackForSmokeTests:
+            return None
+        raise
 
     if not result:
-        return None
+        if config.allowDeterministicFallbackForSmokeTests:
+            return None
+        raise RuntimeError("LLM groundedness check returned no structured JSON payload.")
 
     score = result.get("score") or result.get("groundedness") or result.get("groundedness_score")
     try:
@@ -146,4 +152,9 @@ def evaluate_groundedness(record: ExtractedRecord | dict[str, Any], source_text:
             "mode": "missing_context",
         }
 
-    return llm_groundedness(record, source_text, config) or deterministic_groundedness(record, source_text, config)
+    result = llm_groundedness(record, source_text, config)
+    if result:
+        return result
+    if config.allowDeterministicFallbackForSmokeTests:
+        return deterministic_groundedness(record, source_text, config)
+    raise RuntimeError("LLM groundedness check did not produce a result.")
