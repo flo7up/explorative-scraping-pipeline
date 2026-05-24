@@ -70,6 +70,14 @@ python -m venv .venv
 
 ### 2. Configure the scraping domain
 
+Start from one of the sample configs, then edit it for your domain. Depending on your use case, you will ned to specify the schema for the fields that you want to extract.
+
+```powershell
+Copy-Item examples/aiusecasehub.pipeline.config.json pipeline.config.json
+# or
+Copy-Item examples/sustainability.pipeline.config.json pipeline.config.json
+```
+
 Edit `pipeline.config.json`:
 
 - `domainDescription`: what kind of records you want to find
